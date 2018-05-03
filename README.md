@@ -1,0 +1,2 @@
+# go-log
+Simple logging
