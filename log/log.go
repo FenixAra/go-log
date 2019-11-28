@@ -7,72 +7,27 @@ import (
 	"runtime"
 	"strconv"
 	"time"
-
-	uuid "github.com/satori/go.uuid"
-)
-
-type Level int
-
-const (
-	DEBUG Level = iota + 1
-	INFO
-	WARN
-	ERROR
-	FATAL
-
-	Debug = "DEBUG"
-	Info  = "INFO"
-	Warn  = "WARN"
-	Error = "ERROR"
-	Fatal = "FATAL"
-
-	SHORT = iota
-	FULL
-
-	FilePathShort = "SHORT"
-	FilePathFull  = "FULL"
 )
 
 type Logger struct {
-	l            *log.Logger
-	level        Level
-	filePathSize int
-	ref          string
-	config       *Config
+	l      *log.Logger
+	config *Config
 }
 
 func New(config *Config) *Logger {
 	l := &Logger{}
 	l.config = config
-	l.Init(config)
+	l.l = log.New(os.Stdout, fmt.Sprintf("%v [%s] [ %s ] ", time.Now().UTC(), l.config.appName, l.config.reference), 0)
 	return l
 }
 
-func (l *Logger) Init(config *Config) error {
-	l.ref = config.Reference
-	l.level = config.Level
-	l.filePathSize = config.FilePathSize
-	if l.ref == "" {
-		refUUID, err := uuid.NewV4()
-		if err != nil {
-			l.Error("Unable to generate new UUID. Err: ", err)
-			return err
-		}
-
-		l.ref = refUUID.String()
-	}
-
-	l.l = log.New(os.Stdout, fmt.Sprintf("%v [%s] [ %s ] ", time.Now().UTC(), l.config.AppName, l.ref), 0)
-	return nil
-}
-
-func (l *Logger) GetRef() string {
-	return l.ref
+func (l *Logger) GetReference() string {
+	return l.config.reference
 }
 
 // Debug log with Println format
 func (l *Logger) Debug(v ...interface{}) {
-	if l.level > DEBUG {
+	if l.config.level > DEBUG {
 		return
 	}
 
@@ -81,7 +36,7 @@ func (l *Logger) Debug(v ...interface{}) {
 
 // Info log with Println format
 func (l *Logger) Info(v ...interface{}) {
-	if l.level > INFO {
+	if l.config.level > INFO {
 		return
 	}
 
@@ -89,7 +44,7 @@ func (l *Logger) Info(v ...interface{}) {
 }
 
 func (l *Logger) Warn(v ...interface{}) {
-	if l.level > WARN {
+	if l.config.level > WARN {
 		return
 	}
 
@@ -97,7 +52,7 @@ func (l *Logger) Warn(v ...interface{}) {
 }
 
 func (l *Logger) Error(v ...interface{}) {
-	if l.level > ERROR {
+	if l.config.level > ERROR {
 		return
 	}
 
@@ -105,7 +60,7 @@ func (l *Logger) Error(v ...interface{}) {
 }
 
 func (l *Logger) Fatal(v ...interface{}) {
-	if l.level > FATAL {
+	if l.config.level > FATAL {
 		return
 	}
 
@@ -113,7 +68,7 @@ func (l *Logger) Fatal(v ...interface{}) {
 }
 
 func (l *Logger) Debugf(format string, v ...interface{}) {
-	if l.level > DEBUG {
+	if l.config.level > DEBUG {
 		return
 	}
 
@@ -122,7 +77,7 @@ func (l *Logger) Debugf(format string, v ...interface{}) {
 }
 
 func (l *Logger) Infof(format string, v ...interface{}) {
-	if l.level > INFO {
+	if l.config.level > INFO {
 		return
 	}
 
@@ -131,7 +86,7 @@ func (l *Logger) Infof(format string, v ...interface{}) {
 }
 
 func (l *Logger) Warnf(format string, v ...interface{}) {
-	if l.level > WARN {
+	if l.config.level > WARN {
 		return
 	}
 
@@ -140,7 +95,7 @@ func (l *Logger) Warnf(format string, v ...interface{}) {
 }
 
 func (l *Logger) Errorf(format string, v ...interface{}) {
-	if l.level > ERROR {
+	if l.config.level > ERROR {
 		return
 	}
 
@@ -149,7 +104,7 @@ func (l *Logger) Errorf(format string, v ...interface{}) {
 }
 
 func (l *Logger) Fatalf(format string, v ...interface{}) {
-	if l.level > FATAL {
+	if l.config.level > FATAL {
 		return
 	}
 
@@ -186,7 +141,7 @@ func (l *Logger) formatLogf(logType string, format string, v ...interface{}) (st
 func (l *Logger) getFileLine(n int) (string, int) {
 	_, file, line, _ := runtime.Caller(n)
 	// If you want the short path not the full file path, you can uncomment everything below
-	if l.filePathSize == SHORT {
+	if l.config.filePathSize == SHORT {
 		short := file
 		for i := len(file) - 1; i > 0; i-- {
 			if file[i] == '/' {
@@ -196,5 +151,6 @@ func (l *Logger) getFileLine(n int) (string, int) {
 		}
 		file = short
 	}
+
 	return file, line
 }

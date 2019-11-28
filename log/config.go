@@ -1,6 +1,8 @@
 package log
 
-import "strings"
+import (
+	"github.com/google/uuid"
+)
 
 type Config struct {
 	// The supported log levels are as follows
@@ -8,80 +10,104 @@ type Config struct {
 	// If a log level is specified all logs with level below the specified level are ignored
 	// Eg. If INFO is selected, All DEBUG logs are ignored
 	// If ERROR is selected all logs except ERROR and FATAL are ignored
-	Level Level
-
-	// Log levels in string format.
-	// The supported log level strings are Debug, Info, Warn, Error, Fatal
-	// You can specify log level using Level Enum or string
-	// The Enum value is given first preference
-	LevelStr string
+	level Level
 
 	// Size of the file to be printed, there are two possible values FULL, SHORT
 	// SHORT - Only the file name is displayed
 	// FULL - File name along with full file path is specified
 	// SHORT is used by default
-	FilePathSize int
+	filePathSize int
 
 	// Log Reference (context) ID to be added to each log
 	// This can be used to search relevent logs for the context
-	Reference string
+	reference string
 
 	// Name of the App sending the log
-	AppName string
+	appName string
 }
 
-// Creates Log Config using Reference, Level in string ( DEBUG (OR) INFO (OR) WARN (OR) ERROR (OR) FATAL),
-// File Path Size to be added to log (SHORT, FULL), Application name
-func NewConfig(ref, levelStr, filePathSizeStr, appName string) *Config {
-	var level Level
-	var filePathSize int
-	levelStr = strings.ToUpper(levelStr)
-	filePathSizeStr = strings.ToUpper(filePathSizeStr)
-	switch levelStr {
-	case Debug:
-		level = DEBUG
-	case Info:
-		level = INFO
-	case Warn:
-		level = WARN
-	case Error:
-		level = ERROR
-	case Fatal:
-		level = FATAL
-	default:
-		level = INFO
-	}
+type Level int
 
-	switch filePathSizeStr {
-	case FilePathShort:
-		filePathSize = SHORT
-	case FilePathFull:
-		filePathSize = FULL
-	default:
-		filePathSize = SHORT
-	}
+const (
+	DEBUG Level = iota + 1
+	INFO
+	WARN
+	ERROR
+	FATAL
+
+	LevelDebug = "DEBUG"
+	LevelInfo  = "INFO"
+	LevelWarn  = "WARN"
+	LevelError = "ERROR"
+	LevelFatal = "FATAL"
+
+	SHORT = iota
+	FULL
+
+	FilePathSizeShort = "SHORT"
+	FilePathSizeFull  = "FULL"
+)
+
+// Creates Log Config using Application name.
+// By default Reference is random uuid,
+// Level is INFO,
+// File Path Size is SHORT,
+func NewConfig(appName string) *Config {
+	ref := uuid.New()
 
 	return &Config{
-		Reference:    ref,
-		Level:        level,
-		FilePathSize: filePathSize,
-		AppName:      appName,
+		reference:    ref.String(),
+		level:        INFO,
+		filePathSize: SHORT,
+		appName:      appName,
+	}
+}
+
+// Setting the log level to Log Config. Use the log level string enum
+// ( log.LevelDebug (or) log.LevelInfo (or) log.LevelWarm (or) log.LevelError (or) log.LevelFatal)
+func (c *Config) SetLevel(level string) {
+	switch level {
+	case LevelDebug:
+		c.level = DEBUG
+	case LevelInfo:
+		c.level = INFO
+	case LevelWarn:
+		c.level = WARN
+	case LevelError:
+		c.level = ERROR
+	case LevelFatal:
+		c.level = FATAL
+	default:
+		c.level = INFO
 	}
 }
 
 // Setting the log level to Log Config. Use the log level enum
 // ( log.DEBUG (or) log.INFO (or) log.WARN (or) log.ERROR (or) log.FATAL)
-func (c *Config) SetLevel(level Level) {
-	c.Level = level
+func (c *Config) SetLevelEnum(level Level) {
+	c.level = level
+}
+
+// Setting the file path size to be logged
+// FilePathSizeShort or filePathSize
+func (c *Config) SetFilePathSize(filePathSize string) {
+	switch filePathSize {
+	case FilePathSizeShort:
+		c.filePathSize = SHORT
+	case FilePathSizeFull:
+		c.filePathSize = FULL
+	default:
+		c.filePathSize = SHORT
+	}
 }
 
 // Setting the file path size to be logged
 // SHORT or FULL
-func (c *Config) SetFilePathSize(filePathSize int) {
-	c.FilePathSize = filePathSize
+func (c *Config) SetFilePathSizeEnum(filePathSize int) {
+	c.filePathSize = filePathSize
 }
 
 // Setting the log reference to Config
 func (c *Config) SetReference(ref string) {
-	c.Reference = ref
+	c.reference = ref
 }
